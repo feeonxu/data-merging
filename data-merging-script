@@ -1,0 +1,69 @@
+# Import modules
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Read mother file into a DataFrame using pandas and check column names
+df_overall = pd.read_csv('CR_CS_data_mother file.csv')
+print(df_overall.columns)
+
+# Read OTP file into a DataFrame using pandas and check column names
+df_select = pd.read_excel('OTP_list_100.xlsx')
+print(df_select.columns)
+
+# Rename columns of df_select, since the names of common columns are different
+new_cols = ['NUM', 'SENSOR_ID', 'PRODUCT', 'LOT_ID', 'WAFER_ID', 'DIE_X', 'DIE_Y']
+df_select.columns = new_cols
+
+# Print out the new column names to confirm the change
+print(df_select.columns)
+
+#==============================================================================
+# Print the first 5 rows of both DataFrames for inspection
+# print(df_select.head())
+# print(df_overall.head())
+#==============================================================================
+
+# Identify common columns for merging
+common_cols = ['LOT_ID', 'WAFER_ID', 'DIE_X', 'DIE_Y']
+
+# Merge the two DataFrames on common columns
+df_merge = pd.merge(df_overall, df_select, on = common_cols) 
+print(df_merge.columns)
+
+# Remove '#' in the 'NUM' column
+df_merge['NUM'] = df_merge['NUM'].str.replace('#', '')
+
+# Convert strings to integers
+df_merge['NUM'] = df_merge['NUM'].astype('int')  
+
+# Sort the 'NUM' column in ascending order
+df_merge = df_merge.sort_values(by='NUM', ascending=True)
+
+# Save the merged DataFrame as a csv file
+df_merge.to_csv('merged_file.csv')
+
+# Select specific columns from df_merge to form a desired DataFrame
+df_merge_select = df_merge[['NUM', 'DIE_X', 'DIE_Y', 'LOT_ID', 'WAFER_ID', 'PE_LIGHTON_COLORRATIOOTP_RGRATIO_0', 'PE_LIGHTON_COLORRATIOOTP_BGRATIO_0']]
+
+# Save the merged DataFrame
+df_merge_select.to_csv('merged_file_select.csv')
+
+# Specify x and y axes to plot
+x = df_merge_select[['PE_LIGHTON_COLORRATIOOTP_RGRATIO_0']]
+y = df_merge_select[['PE_LIGHTON_COLORRATIOOTP_BGRATIO_0']]
+
+# Set up to plot two scatter plots on the same subplot
+fig = plt.figure()
+ax1 = fig.add_subplot(111)
+
+# Plot data
+ax1.scatter(x[:500], y[:500], c='r', marker=',', label='NG') # Numbers 1-499 are NG parts
+ax1.scatter(x[500:], y[500:], c='g', marker=',', label='OK') # Numbers 500-1000 are OK parts
+
+# Specify axis limits
+plt.xlim(0.5, 0.7)
+plt.ylim(0.5, 0.7)
+
+# Specify location of legends and show the plot
+plt.legend(loc='upper left');
+plt.show()
